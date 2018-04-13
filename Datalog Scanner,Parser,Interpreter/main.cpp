@@ -61,6 +61,6 @@ int main(int argc, char* argv[]) {
 	//double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 	//cout << "PROGRAM TOOK: " << elapsed_secs << " SECONDS." << endl;
 
-	system("pause");
+	//system("pause");
 	return 0;
 }

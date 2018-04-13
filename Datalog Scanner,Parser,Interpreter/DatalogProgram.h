@@ -16,6 +16,7 @@ public:
 	vector<string> getSchemeNames();
 	vector<string> getFactNames();
 	string getHeadRuleName(int index);
+	vector<string> getAllHeadRuleNames();
 	vector<string> getRuleNames(int index);
 	vector<string> getQueryNames();
 

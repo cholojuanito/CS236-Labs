@@ -45,6 +45,14 @@ string DatalogProgram::getHeadRuleName(int index) {
 	return this->rules.at(index)->getHeadPredName();
 }
 
+vector<string> DatalogProgram::getAllHeadRuleNames() {
+	vector<string> names = {};
+	for (auto rule : this->rules) {
+		names.push_back(rule->getHeadPredName());
+	}
+	return names;
+}
+
 vector<string> DatalogProgram::getRuleNames(int index) {
 	vector<string> names;
 	names = this->rules.at(index)->getPredNames();

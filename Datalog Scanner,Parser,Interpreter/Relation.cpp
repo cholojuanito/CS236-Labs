@@ -68,13 +68,11 @@ bool Relation::addRow(Tuple tuple) {
  */
 Relation Relation::select(string value, int column) {
 	Relation newRelation = Relation(this->name, this->columnHeaders);
-	set<Tuple>::iterator iter = this->rows.begin();
-	set<Tuple>::iterator last = this->rows.end();
 
-	for (; iter != last; iter++) {
-		string current = iter->at(column);
+	for (const Tuple& row : this->rows) {
+		string current = row.at(column);
 		if (current == value) {
-			newRelation.addRow(*iter);
+			newRelation.addRow(row);
 		}
 	}
 
@@ -89,14 +87,12 @@ Relation Relation::select(string value, int column) {
  */
 Relation Relation::select(int column1, int column2) {
 	Relation newRelation = Relation(this->name, this->columnHeaders);
-	set<Tuple>::iterator iter = this->rows.begin();
-	set<Tuple>::iterator last = this->rows.end();
 
-	for (; iter != last; iter++) {
-		string firstVal = iter->at(column1);
-		string secondVal = iter->at(column2);
+	for (const Tuple& row : this->rows) {
+		string firstVal = row.at(column1);
+		string secondVal = row.at(column2);
 		if (firstVal == secondVal) {
-			newRelation.addRow(*iter);
+			newRelation.addRow(row);
 		}
 	}
 
@@ -115,8 +111,6 @@ Relation Relation::project(vector<int> columns) {
 	vector<string> newSchemeValues = {};
 	Scheme newScheme;
 	int numNewColumns = columns.size();
-	set<Tuple>::iterator iter = this->rows.begin();
-	set<Tuple>::iterator last = this->rows.end();
 
 	// Find the values for the new scheme
 	for (int i = 0; i < numNewColumns; i++) {
@@ -125,11 +119,11 @@ Relation Relation::project(vector<int> columns) {
 		newSchemeValues.push_back(columnName);
 	}
 	// Find the table values in the corresponding columns that need to be copied
-	for (; iter != last; iter++) {
+	for (const Tuple& row : this->rows) {
 		Tuple newRowValue = {};
 		for (int i = 0; i < numNewColumns; i++) {
 			int newColumnIndex = columns.at(i);
-			newRowValue.push_back(iter->at(newColumnIndex));
+			newRowValue.push_back(row.at(newColumnIndex));
 		}
 
 		newRelation.addRow(newRowValue);
@@ -157,20 +151,14 @@ Relation Relation::join(Relation& r1, Relation& r2) {
 	Scheme s2 = r2.getScheme();
 	set<Tuple> t1 = r1.getRows();
 	set<Tuple> t2 = r2.getRows();
-	set<Tuple>::iterator iterT1, iterT2;
-	set<Tuple>::iterator lastT1 = t1.end();
-	set<Tuple>::iterator lastT2 = t2.end();
 
 	Scheme newScheme = this->joinScheme(s1, s2);
 	newRelation.changeScheme(newScheme);
 
-	for (iterT1 = t1.begin(); iterT1 != lastT1; iterT1++) {
-		Tuple row1 = *iterT1;
-		for (iterT2 = t2.begin(); iterT2 != lastT2; iterT2++) {
-			Tuple row2 = *iterT2;
+	for (Tuple row1 : t1) {
+		for (Tuple row2 : t2) {
 			if (this->rowsAreJoinable(row1, row2, s1, s2)) {
 				 Tuple newRow = this->joinRows(row1, row2, s1, s2);
-
 				 newRelation.addRow(newRow);
 			}
 		}
@@ -185,7 +173,7 @@ Relation Relation::join(Relation& r1, Relation& r2) {
  * Make sure it is persisted into the database
  */
 void Relation::onion(Relation& resultOfRuleEval) {
-	for (auto row : resultOfRuleEval.rows) {
+	for (Tuple row : resultOfRuleEval.rows) {
 		if (this->addRow(row)) {
 			// Make a toString of the row added according to the output wanted
 			cout << this->toStringNewRow(row);
@@ -195,13 +183,11 @@ void Relation::onion(Relation& resultOfRuleEval) {
 
 string Relation::toString() const {
 	ostringstream oss;
-	set<Tuple>::iterator iter = this->rows.begin();
-	set<Tuple>::iterator last = this->rows.end();
 
 	oss << endl << "Table: " << this->name << endl;
 	oss << "\t" << this->columnHeaders.toString() << endl;
-	for (; iter != last; iter++) {
-		oss << "\t" << iter->toString() << endl;
+	for (const Tuple& row : this->rows) {
+		oss << "\t" << row.toString() << endl;
 	}
 
 	return oss.str();
@@ -257,18 +243,6 @@ Tuple Relation::joinRows(Tuple& t1, Tuple& t2, Scheme& s1, Scheme& s2) const {
 	/*
 	 Same as joinable function but check if the columns are different names.
 	*/
-/*
-	cout << "ROW 1: ";
-	for (int i = 0; i < t1.size(); i++) {
-		cout << t1.at(i) << " ";
-	}
-	cout << "\nROW 2: ";
-	for (int i = 0; i < t2.size(); i++) {
-		cout << t2.at(i) << " ";
-	}
-	cout << endl;
-*/
-
 	vector<string> s1Headers = s1.getColumnHeaders();
 	vector<string> s2Headers = s2.getColumnHeaders();
 
@@ -304,8 +278,6 @@ bool Relation::rowsAreJoinable(Tuple& t1, Tuple& t2, Scheme& s1, Scheme& s2) con
 				// If they are then check the values in those positions.
 				// If they are NOT the same then the rows are not joinable.
 				if (t1Value != t2Value) {
-					/*cout << endl << "THERE WAS AN ISSUE WITH 1's VALUE " << t1Value << "OF COLUMN " <<  endl
-						<< "AND 2's VALUE" << t2Value << "OF COLUMN " << s2Value << "!" << endl;*/
 					return false;
 				}
 			}
@@ -317,9 +289,8 @@ bool Relation::rowsAreJoinable(Tuple& t1, Tuple& t2, Scheme& s1, Scheme& s2) con
 }
 
 bool Relation::isColumnNameDiff(vector<string>& col1Names, string col2Name) const {
-	int row1Size = col1Names.size();
-	for (int i = 0; i < row1Size; i++) {
-		if (col1Names.at(i) == col2Name) {
+	for (string col1Name : col1Names) {
+		if (col1Name == col2Name) {
 			return false;
 		}
 	}

@@ -9,6 +9,9 @@
 */
 #include "DatalogProgram.h"
 #include "Database.h"
+#include "Graph.h"
+
+using namespace std;
 
 class Interpreter
 {
@@ -31,11 +34,34 @@ protected:
 	Database db;
 
 private:
+	Graph dependencyGraph;
+	Graph reverseGraph;
+
+	/*
+	 * Helper data members
+	 */
+
+	// Query evaluation
 	vector<int> columnsNumbersToProject;
 	vector<string> queryValues;
 	vector<string> variableNamesAdded;
 
-	// Helper functions
+	// Rule evaluation
+	vector<string> allRuleHeadNames;
+	string ruleHeadName;
+	vector<string> ruleHeadValues;
+	vector<string> ruleBodyNames;
+	vector<vector<string>> ruleBodyValues;
+	vector<set<int>> sccs; // Strongly Connected Components
+
+	/*
+	 * End helper data members 
+	 */
+
+
+	/* 
+	 * Helper functions
+	 */
 
 	//Database creation
 	void createAndAddTables();
@@ -44,10 +70,9 @@ private:
 	Scheme createColumnHeaders(vector<string> columnHeaders);
 	Tuple createRow(vector<string> rowValues);
 
-	// Query evalution
+	// Query evaluation
 	void evaluateQueries();
 	void evaluateQuery(string queryScheme);
-	void addToColumnNumsToProject(int columnNumToAdd);
 	void addToColumnNumsToProject(string variableName, int columnNumToAdd);
 	void performConstantSelects(Relation& relationCopy);
 	void performVariableSelects(Relation& relationCopy);
@@ -55,20 +80,35 @@ private:
 	bool queryHasVariables();
 
 	// Rule evaluation
-	void evaluteRules();
-	void evaluteRule(string ruleHeadName, vector<string> ruleHeadValues, vector<string> ruleNames, vector<vector<string>> ruleValues);
+	void createDependencyGraphs();
+	void createNodesAndEdges();
+	void addNodesToGraphs(int numRules);
+	void createGraphEdges(int numRules, int currentRuleIndex);
+	void findSCCs();
+
+	void evaluateRulesBySCC();
+	void evaluateRules(set<int>& scc);
+	void evaluateRulesRelyOnSelf(set<int>& scc);
+	void evaluateRulesOnce(set<int>& scc);
+	void evaluateRule();
 	bool numOfDBRowsHasChanged(int oldNumOfRows);
-	vector<Relation> performEvalOfRightSideRules(vector<string>& ruleNames, vector<vector<string>>& ruleValues);
+	bool shouldEvaluateSCCOnlyOnce(set<int>& scc);
+	bool sccDependsOnItself(set<int>& scc);
+	vector<Relation> performEvalOfRightSideRules();
 	void performJoins(Relation& relationCopy, vector<Relation>& rightSideRelations);
-	void getRuleColumnsToProject(vector<string>& ruleHeadVals, vector<string>& endRelationSchemeVals);
+	void getRuleColumnsToProject(vector<string>& endRelationSchemeVals);
 
 	// Output
 	string toStringQueryEvaluation(Relation& finalRelation, string querySchemeName);
 	string toStringQuery(string querySchemeName);
 	string toStringQueryWithVariables(set<Tuple>& rows);
 
-	string toStringRule(string& ruleHeadName, vector<string>& ruleHeadValues, vector<string>& ruleNames, vector<vector<string>>& ruleValues) const;
-	string toStringHeadRule(string& ruleHeadName, vector<string>& ruleHeadValues) const;
-	string toStringRulePredicates(vector<string>& ruleNames, vector<vector<string>>& ruleValues) const;
+	string toStringRule();
+	string toStringHeadRule();
+	string toStringRulePredicates();
+	string toStringSCC(set<int> scc);
 
+	/*
+	 * End helper functions
+	 */
 };
